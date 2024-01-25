@@ -86,13 +86,14 @@ variable "appgw_config" {
 
 variable "webapp_config" {
   type = map(object({
-    location    = optional(string, "australiaeast")
-    sku_name    = optional(string, "S1")
-    app_name    = optional(string)
-    vnet_name   = optional(string)
-    subnet_name = optional(string)
-    pve_subnet_name = optional(string)
-    has_vnet_integration = optional(bool, false)
-    has_private_dns_zone = optional(bool, false)   
+    location                      = optional(string, "australiaeast")
+    sku_name                      = optional(string, "S1")
+    app_name                      = optional(string)
+    vnet_name                     = optional(string)
+    subnet_name                   = optional(string)
+    pve_subnet_name               = optional(string)
+    has_vnet_integration          = optional(bool, false)
+    has_private_dns_zone          = optional(bool, false)
+    public_network_access_enabled = optional(bool, true)
   }))
 }

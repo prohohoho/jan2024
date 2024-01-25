@@ -18,3 +18,4 @@ variable "vnet_id" {}
 
 variable "has_vnet_integration" {}
 variable "has_private_dns_zone" {}
+variable "public_network_access_enabled" {}

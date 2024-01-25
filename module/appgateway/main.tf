@@ -143,7 +143,7 @@ resource "azurerm_application_gateway" "network" {
     password = var.cert_pass
     #data     = filebase64("${path.module}/ssl-self-signed/httpd.pfx")
     #data     = filebase64("${path.module}/output.tf")
-    data     = data.azurerm_key_vault_secret.example.value
+    data = data.azurerm_key_vault_secret.example.value
   }
 
   request_routing_rule {
