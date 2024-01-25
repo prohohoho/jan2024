@@ -1,11 +1,13 @@
 
 data "azurerm_key_vault" "existing" {
+  count          = var.keyvault_name != null ? 1 : 0
   name                = var.keyvault_name
   resource_group_name = var.resource_group_name
 }
 data "azurerm_key_vault_secret" "example" {
+  count          = var.keyvault_name != null ? 1 : 0
   name         = var.secret_name
-  key_vault_id = data.azurerm_key_vault.existing.id
+  key_vault_id = data.azurerm_key_vault.existing[count.index].id
 }
 
 resource "azurerm_public_ip" "publicip" {
@@ -21,7 +23,7 @@ locals {
   #generic
   redirect_configuration_name    = "${var.vnet_name}-rdrcfg"
   frontend_ip_configuration_name = "${var.vnet_name}-feip"
-
+  request_routing_rule_name_https2 = "${var.vnet_name}-rqrt-https2"
 
   # App1
   backend_address_pool_name = "${var.vnet_name}-beap"
@@ -41,7 +43,76 @@ locals {
   frontend_port_name_http        = "${var.vnet_name}-feport-http"
 }
 
-resource "azurerm_application_gateway" "network" {
+resource "azurerm_application_gateway" "httpnetwork" {
+  count          = var.hashttpslistener ? 0 : 1
+  name                = var.appgw_name
+  resource_group_name = var.resource_group_name
+  location            = var.location
+
+  sku {
+    name     = "WAF_v2"
+    tier     = "WAF_v2"
+    capacity = 2
+  }
+  waf_configuration {
+    enabled = true
+    firewall_mode = "Detection"
+    rule_set_version = "3.2"
+  }
+  gateway_ip_configuration {
+    name      = "${var.appgw_name}-gw-ip-config"
+    subnet_id = var.subnet.id
+
+  }
+
+  frontend_port {
+    name = local.frontend_port_name_http
+    port = 80
+
+  }
+
+  frontend_ip_configuration {
+    name                 = local.frontend_ip_configuration_name
+    public_ip_address_id = azurerm_public_ip.publicip.id
+
+  }
+
+  backend_address_pool {
+    name = local.backend_address_pool_name
+
+  }
+
+  backend_http_settings {
+    name                  = local.http_setting_name
+    cookie_based_affinity = "Disabled"
+    path                  = "/path1/"
+    port                  = 80
+    protocol              = "Http"
+    request_timeout       = 60
+  }
+
+  http_listener {
+    name                           = local.listener_name_http
+    frontend_ip_configuration_name = local.frontend_ip_configuration_name
+    frontend_port_name             = local.frontend_port_name_http
+    protocol                       = "Http"
+  }
+
+  request_routing_rule {
+    name                       = local.request_routing_rule_name_http
+    priority                   = 9
+    rule_type                  = "Basic"
+    http_listener_name         = local.listener_name_http
+    backend_address_pool_name  = local.backend_address_pool_name
+    backend_http_settings_name = local.http_setting_name
+  }
+}
+
+
+################# With HTTPS Listener ######################
+
+resource "azurerm_application_gateway" "httpsnetwork" {
+  count          = var.hashttpslistener ? 1 : 0
   name                = var.appgw_name
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -118,15 +189,6 @@ resource "azurerm_application_gateway" "network" {
     # }    
   }
 
-  # HTTP Routing Rule - HTTP to HTTPS Redirect
-  request_routing_rule {
-    name                        = local.request_routing_rule_name_http
-    rule_type                   = "Basic"
-    http_listener_name          = local.listener_name_http
-    redirect_configuration_name = local.redirect_configuration_name
-  }
-
-
 
   #Redirect Config for HTTP to HTTPS Redirect  
   redirect_configuration {
@@ -142,9 +204,18 @@ resource "azurerm_application_gateway" "network" {
     name     = local.ssl_certificate_name
     password = var.cert_pass
     #data     = filebase64("${path.module}/ssl-self-signed/httpd.pfx")
-    #data     = filebase64("${path.module}/output.tf")
-    data = data.azurerm_key_vault_secret.example.value
+    data     = try(data.azurerm_key_vault_secret.example[count.index].value,filebase64("${path.module}/output.tf"))    
   }
+
+  # HTTP Routing Rule - HTTP to HTTPS Redirect
+  request_routing_rule {
+    name                        = local.request_routing_rule_name_https2
+    priority                    = 7
+    rule_type                   = "Basic"
+    http_listener_name          = local.listener_name_http
+    redirect_configuration_name = local.redirect_configuration_name
+  }
+
 
   request_routing_rule {
     name                       = local.request_routing_rule_name_http
@@ -159,6 +230,7 @@ resource "azurerm_application_gateway" "network" {
   request_routing_rule {
     name                       = local.request_routing_rule_name_https
     rule_type                  = "Basic"
+    priority                   = 8
     http_listener_name         = local.listener_name_https
     backend_address_pool_name  = local.backend_address_pool_name
     backend_http_settings_name = local.http_setting_name

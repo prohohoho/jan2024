@@ -28,26 +28,22 @@ resource "azurerm_cdn_frontdoor_origin_group" "my_origin_group" {
   }
 }
 
-data "azurerm_application_gateway" "my_app_service_origin01" {
-  name                = var.appgw.name
-  resource_group_name = var.resource_group_name
-}
-
-
-data "azurerm_public_ip" "pip1" {
+resource "azurerm_public_ip" "example" {
   name                = var.appgwpip.name
   resource_group_name = var.resource_group_name
+  location            = var.location
+  allocation_method   = "Static"
 }
 
-resource "azurerm_cdn_frontdoor_origin" "my_app_service_origin01" {
+resource "azurerm_cdn_frontdoor_origin" "my_app_service_origin" {
   name                          = "${var.front_door_profile_name}-origin-door1"
   cdn_frontdoor_origin_group_id = azurerm_cdn_frontdoor_origin_group.my_origin_group.id
 
   enabled                        = true
-  host_name                      = data.azurerm_public_ip.pip1.ip_address #var.hostname_01
+  host_name                      = azurerm_public_ip.example.ip_address
   http_port                      = 80
   https_port                     = 443
-  origin_host_header             = data.azurerm_public_ip.pip1.ip_address #var.hostname_01
+  origin_host_header             = azurerm_public_ip.example.ip_address #var.hostname_01
   priority                       = 1
   weight                         = 1000
   certificate_name_check_enabled = true
@@ -58,7 +54,7 @@ resource "azurerm_cdn_frontdoor_route" "my_route" {
   name                          = "${var.front_door_profile_name}-route"
   cdn_frontdoor_endpoint_id     = azurerm_cdn_frontdoor_endpoint.my_endpoint.id
   cdn_frontdoor_origin_group_id = azurerm_cdn_frontdoor_origin_group.my_origin_group.id
-  cdn_frontdoor_origin_ids      = [azurerm_cdn_frontdoor_origin.my_app_service_origin01.id]
+  cdn_frontdoor_origin_ids      = [azurerm_cdn_frontdoor_origin.my_app_service_origin.id]
 
   supported_protocols    = ["Http", "Https"]
   patterns_to_match      = ["/*"]

@@ -7,3 +7,4 @@ variable "appgw_name" {}
 variable "cert_pass" {}
 variable "keyvault_name" {}
 variable "secret_name" {}
+variable "hashttpslistener" {}

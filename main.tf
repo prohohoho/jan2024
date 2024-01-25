@@ -16,21 +16,23 @@ module "networking" {
 }
 
 
-# module "appgw" {
-#   source   = "./module/appgateway"
-#   for_each = var.appgw_config
+module "appgw" {
+  source   = "./module/appgateway"
+  for_each = var.appgw_config
 
-#   appgw_name          = each.key
-#   vnet_name           = each.value.vnet_name
-#   resource_group_name = azurerm_resource_group.example.name
-#   location            = each.value.location
-#   subnet              = module.networking[each.value.vnet_name].subnets[each.value.subnet_name]
-#   cert_pass           = each.value.cert_pass
-#   keyvault_name       = each.value.keyvault_name
-#   secret_name         = each.value.secret_name
-# }
+  appgw_name          = each.key
+  vnet_name           = each.value.vnet_name
+  resource_group_name = azurerm_resource_group.example.name
+  location            = each.value.location
+  subnet              = module.networking[each.value.vnet_name].subnets[each.value.subnet_name]
+  cert_pass           = each.value.cert_pass
+  keyvault_name       = each.value.keyvault_name
+  secret_name         = each.value.secret_name
+  hashttpslistener    = each.value.hashttpslistner
+}
 
 module "webapp" {
+  depends_on = [ module.networking ]
   source                        = "./module/webappservice"
   for_each                      = var.webapp_config
   plan_name                     = each.key

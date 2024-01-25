@@ -75,12 +75,14 @@ variable "network_configurations" {
 }
 variable "appgw_config" {
   type = map(object({
-    location      = optional(string, "australiaeast")
-    vnet_name     = string
-    subnet_name   = string
-    cert_pass     = string
-    keyvault_name = string
-    secret_name   = string
+    location              = optional(string, "australiaeast")
+    vnet_name             = string
+    subnet_name           = string
+    cert_pass             = optional(string, null)
+    keyvault_name         = optional(string, null)
+    secret_name           = optional(string, null)
+    hashttpslistner       = optional(bool, false)
+    haskvforcert          = optional(bool, false)
   }))
 }
 

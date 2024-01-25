@@ -3,7 +3,12 @@ output "appgwpip" {
   value       = azurerm_public_ip.publicip
 }
 
-output "appgw" {
+output "appgwhttp" {
   description = "return appgw name"
-  value       = azurerm_application_gateway.network
+  value       = azurerm_application_gateway.httpnetwork
+}
+
+output "appgwhttps" {
+  description = "return appgw name"
+  value       = azurerm_application_gateway.httpnetwork
 }
