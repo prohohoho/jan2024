@@ -73,16 +73,6 @@ variable "network_configurations" {
     }))
   }))
 }
-
-
-variable "frontdoor" {
-  type = map(object({
-    front_door_profile_name = string
-    location                = optional(string, "australiaeast")
-    appgw_name              = string
-  }))
-}
-
 variable "appgw_config" {
   type = map(object({
     location      = optional(string, "australiaeast")
@@ -94,23 +84,15 @@ variable "appgw_config" {
   }))
 }
 
-variable "frontendwebapp_config" {
+variable "webapp_config" {
   type = map(object({
     location    = optional(string, "australiaeast")
     sku_name    = optional(string, "S1")
-    app_name    = string
+    app_name    = optional(string)
     vnet_name   = optional(string)
     subnet_name = optional(string)
-  }))
-}
-
-variable "backendwebapp_config" {
-  type = map(object({
-    location  = optional(string, "australiaeast")
-    sku_name  = optional(string, "S1")
-    app_name  = string
-    vnet_name = optional(string)
-    #subnet_name     = optional(string)
     pve_subnet_name = optional(string)
+    has_vnet_integration = optional(bool, false)
+    has_private_dns_zone = optional(bool, false)   
   }))
 }
