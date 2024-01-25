@@ -45,13 +45,13 @@ resource "azurerm_app_service_virtual_network_swift_connection" "vnetintegration
 
 resource "azurerm_private_dns_zone" "dnsprivatezone" {
   count               = var.has_private_dns_zone ? 1 : 0
-  name                = "privatelink.azurewebsites.net"
+  name                = "${var.app_name}.azurewebsites.net"
   resource_group_name = var.resource_group_name
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "dnszonelink" {
   count                 = var.has_private_dns_zone ? 1 : 0
-  name                  = "ddh-dnszonelink"
+  name                  = "${var.app_name}-dnszonelink"
   resource_group_name   = var.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.dnsprivatezone[count.index].name
   virtual_network_id    = var.vnet_id
@@ -59,18 +59,18 @@ resource "azurerm_private_dns_zone_virtual_network_link" "dnszonelink" {
 
 resource "azurerm_private_endpoint" "privateendpoint" {
   count               = var.has_private_dns_zone ? 1 : 0
-  name                = "ddh-backwebappprivateendpoint"
+  name                = "${var.app_name}-pvendpoint"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.pve_subnet.id
 
   private_dns_zone_group {
-    name                 = "ddh-privatednszonegroup"
+    name                 = "${var.app_name}--pvdnszonegroup"
     private_dns_zone_ids = [azurerm_private_dns_zone.dnsprivatezone[count.index].id]
   }
 
   private_service_connection {
-    name                           = "ddh-privateendpointconnection"
+    name                           = "${var.app_name}-pvendpointconnection"
     private_connection_resource_id = azurerm_linux_web_app.example.id
     subresource_names              = ["sites"]
     is_manual_connection           = false
